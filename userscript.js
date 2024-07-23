@@ -24,7 +24,7 @@
             Art: 'FALSE',
             Podfic: 'FALSE',
             Fic: 'TRUE',
-            Points: '1',
+            Points: '',
             Wordcount: document.querySelector('dd.words')?.textContent.trim() || '',
             Link: window.location.href,
             Rating: '',
@@ -47,21 +47,30 @@
         }
 
         // Extract tags
-        let tags = Array.from(document.querySelectorAll('dd.freeform.tags a')).map(tag => tag.textContent.trim());
+        let authorNotes = document.querySelector('.preface .notes')?.textContent || '';
+        let tagLine = authorNotes.split('\n').reverse().find(line =>
+            line.toLowerCase().startsWith('tags:') ||
+            line.toLowerCase().includes('tags claimed')
+        ) || '';
+        let tags = tagLine.replace(/^tags:?\s*/i, '').split(/,\s*/).map(tag => tag.trim());
         for (let i = 0; i < 10; i++) {
             info[`Tag${i+1}`] = tags[i] || '';
         }
+        /* let tags = Array.from(document.querySelectorAll('dd.freeform.tags a')).map(tag => tag.textContent.trim());
+        for (let i = 0; i < 10; i++) {
+            info[`Tag${i+1}`] = tags[i] || '';
+        } */
 
         // Check for art or podfic
         let summary = document.querySelector('div.summary .userstuff')?.textContent.toLowerCase() || '';
         if (summary.includes('art')) {
             info.Art = 'TRUE';
             info.Fic = 'FALSE';
-            info.Points = '2';
+            // info.Points = '2';
         } else if (summary.includes('podfic')) {
             info.Podfic = 'TRUE';
             info.Fic = 'FALSE';
-            info.Points = '2';
+            // info.Points = '2';
         }
 
         // Format as tab-separated values
@@ -115,6 +124,9 @@
 
         // Extract info for each work
         let workInfos = Array.from(workElements).map(workElement => {
+            if (workElement.textContent.includes('(Draft)')) {
+                return {link: ""}; // Skip drafts
+            }
             let link = workElement.querySelector('h4.heading a')?.href || '';
             let creatorRecipientText = workElement.querySelector('h5.heading')?.textContent.trim() || '';
 
@@ -134,7 +146,7 @@
                 Creator3: creators[2] || '',
                 Recipient: recipient
             };
-        });
+        }).filter(work => work.link !== "skip" && work.link.length);
 
         // Save work infos
         GM_setValue('remainingWorks', JSON.stringify(workInfos));
@@ -154,6 +166,7 @@
             let nextWork = remainingWorks.shift();
             GM_setValue('remainingWorks', JSON.stringify(remainingWorks));
             GM_setValue('currentWorkInfo', JSON.stringify(nextWork));
+            console.log(`opening ${JSON.stringify(nextWork)}`);
             window.open(nextWork.link, 'ao3work');
         } else {
             alert('All works processed!');
