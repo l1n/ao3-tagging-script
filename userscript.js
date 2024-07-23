@@ -49,8 +49,7 @@
         // Extract tags
         let authorNotes = document.querySelector('.preface .notes')?.textContent || '';
         let tagLine = authorNotes.split('\n').reverse().find(line =>
-            line.toLowerCase().startsWith('tags:') ||
-            line.toLowerCase().includes('tags claimed')
+            line.toLowerCase().includes('tags')
         ) || '';
         let tags = tagLine.replace(/^tags:?\s*/i, '').split(/,\s*/).map(tag => tag.trim());
         for (let i = 0; i < 10; i++) {
